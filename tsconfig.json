@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "module": "commonjs",
+    "noImplicitAny": false,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "outDir": "./dist",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "target": "es2018"
+  },
+  "include": ["./scripts", "./test", "./lib", "./tasks", "./deploy", "./typechain-types"],
+  "exclude": ["node_modules/**/*"],
+  "files": ["./hardhat.config.ts", "./.eslintrc.js"]
+}

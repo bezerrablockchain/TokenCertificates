@@ -1,0 +1,70 @@
+# SPDX-FileCopyrightText: 2021 Toucan Labs
+#
+# SPDX-License-Identifier: LicenseRef-Proprietary
+
+# Ignore build/compile artifacts in `packages`
+packages/common/dist
+packages/ecoregistry/artifacts
+packages/frontend/.next
+packages/frontend/artifacts
+packages/hardhat/.openzeppelin
+packages/hardhat/artifacts
+packages/hardhat/cache
+packages/hardhat/coverage
+packages/hardhat/data
+packages/hardhat/deployments
+packages/hardhat/gas_report.txt
+packages/subgraph/abis/
+packages/subgraph/build/
+packages/subgraph/config/**/*.json
+packages/subgraph/generated/
+packages/subgraph/src/subgraph.template.yaml
+packages/services/graph-node/data
+# Temporary fix for mustache insertion of two empty lines in matic.yaml
+packages/subgraph/config/production/matic.yaml
+packages/subgraph/config/production/celo.yaml
+packages/subgraph/config/staging/celo-alfajores.yaml
+
+# Ignore symlink to `hardhat/contracts` (otherwise it's being checked twice)
+packages/frontend/contracts
+
+# Ignore eslintignore in hardhat
+packages/hardhat/.eslintignore
+
+# Ignore Docker artifacts
+.dockerignore
+Dockerfile
+
+# Documentation / diagrams
+*.puml
+plantuml.skin
+*.drawio
+
+# Explicitly ignore config files without prettier parser (needed for lint-staged)
+.editorconfig
+.gitblameignore
+.gitmodules
+.gitignore
+.husky
+.prettierignore
+yarn.lock
+*.plantuml
+.env.*
+*.png
+*.svg
+*.ico
+*.jpg
+*.jpeg
+*.otf
+*.properties
+remix-compiler.config.js
+Makefile
+*.puml
+*.archive
+*.sh
+.yarn/
+
+# Ignore reuse licensing stuff
+.reuse/
+LICENSES/
+*.license

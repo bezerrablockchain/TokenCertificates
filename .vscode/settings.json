@@ -1,0 +1,18 @@
+{
+    "solidity.packageDefaultDependenciesDirectory": "packages/hardhat/node_modules",
+    "eslint.codeAction.showDocumentation": {
+      "enable": true
+    },
+    "eslint.alwaysShowStatus": true,
+    "eslint.format.enable": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixall.eslint": true
+    },
+    "solidity.compileUsingRemoteVersion": "v0.8.15+commit.e14f2714",
+    "solidity.defaultCompiler": "localNodeModule",
+    "[solidity]": {
+      "editor.defaultFormatter": "NomicFoundation.hardhat-solidity"
+    }
+    //"editor.formatOnSave": true
+}
