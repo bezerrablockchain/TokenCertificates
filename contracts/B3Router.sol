@@ -8,6 +8,8 @@ import '@openzeppelin/contracts/access/AccessControl.sol';
 import './IB3CertificadoLote.sol';
 import './IB3Token.sol';
 
+import 'hardhat/console.sol';
+
 contract B3Router is Context, AccessControl, Pausable {
     bytes32 public constant REGULATOR_ROLE = keccak256('REGULATOR_ROLE');
     bytes32 public constant EMISSOR_ROLE = keccak256('EMISSOR_ROLE');
@@ -30,16 +32,19 @@ contract B3Router is Context, AccessControl, Pausable {
         string shortDescription;
         uint256 tokensInitialAmount;
         uint256 tokensActualAmount;
+        uint256 notBurnedAmount;
         bool isExhausted;
         bool minted;
         bool exists;
     }
 
+    mapping(address => uint256[]) public ownedCertificates; // # Address => Certificates IDs
+
     mapping(uint256 => Certificate) certificates;
     uint256[] private certificatesIDs;
 
     mapping(address => bool) public allowedWallets;
-    address[] public wallets;
+    address[] public wallets = new address[](0);
 
     constructor(address _b3Certificados, address _b3Token, address _masterAcct) {
         b3Certificados = _b3Certificados;
@@ -67,9 +72,11 @@ contract B3Router is Context, AccessControl, Pausable {
         string calldata URI
     ) external onlyRoleOrMasterAcct(REGULATOR_ROLE){
         require(!certificates[certificateId].exists, 'Certificado ja emitido');
+        require(certificateId > 0, 'ID do certificado invalido - deve ser maior que zero');
         
         certificates[certificateId] = Certificate(
             shortDescription,
+            tokensInitialAmount,
             tokensInitialAmount,
             tokensInitialAmount,
             false,
@@ -149,19 +156,36 @@ contract B3Router is Context, AccessControl, Pausable {
 
         certificates[certificateID].tokensActualAmount -= amount;
         IB3Token(b3Token).transfer(_msgSender(), amount);
+
+        uint256 totalOwnedCertificates = ownedCertificates[_msgSender()].length;
+        bool found = false;
+        for (uint256 i; i < totalOwnedCertificates; ++i) {
+            if (ownedCertificates[_msgSender()][i] == certificateID) {
+                found = true;
+                // console.log("Certificado ja existente- %d", certificateID);
+                break;
+            }
+        } 
+        if (!found) {
+            ownedCertificates[_msgSender()].push(certificateID);
+            // console.log("Certificado adicionado - %d", certificateID);
+        }
     }
 
-    function burnCertificatesAmount(uint256 amount) external onlyRoleOrMasterAcct(ALLOWED_CONTRACT_ROLE){
+    function burnCertificatesAmount(address certOwner, uint256 amount) external onlyRoleOrMasterAcct(ALLOWED_CONTRACT_ROLE){
         uint256 qtdeCertificados = certificatesIDs.length;
         uint256 amountToBurn = amount;
 
         for (uint256 i; i < qtdeCertificados; ++i) {
-            (uint256 val, uint256 index) = getCertificateMinorTokensAmount();
+            (uint256 val, uint256 index) = getCertificateMinorTokensAmount(certOwner);
+            // console.log("Valor %d - Index %d", val, index);
+
             if (val >= amountToBurn) {
-                certificates[certificatesIDs[index]].tokensActualAmount -= amountToBurn;
+                certificates[certificatesIDs[index]].notBurnedAmount -= amountToBurn;
                 certificates[certificatesIDs[index]].isExhausted = true;
+                amountToBurn = 0;
             } else {
-                certificates[certificatesIDs[index]].tokensActualAmount -= val;
+                certificates[certificatesIDs[index]].notBurnedAmount -= val;
                 certificates[certificatesIDs[index]].isExhausted = true;
                 amountToBurn -= val;
             }
@@ -169,14 +193,30 @@ contract B3Router is Context, AccessControl, Pausable {
         require(amountToBurn == 0, 'Nao foi possivel queimar a quantidade desejada');
     }
 
-    function getCertificateMinorTokensAmount() public view returns (uint256 value, uint256 index) {
-        uint256 qtdeCertificados = certificatesIDs.length;
-        uint256 minorAmount = 0;
+    function getCertificateMinorTokensAmount(address certOwner) public view returns (uint256 value, uint256 index) {
+        uint256 qtdeCertificados = ownedCertificates[certOwner].length;
+        // console.log("Qtde %d", qtdeCertificados);
+
+        // #extract not exhausted array
+        uint256[] memory notExhaustedCertificatesIDs = new uint256[](qtdeCertificados);
+        uint256 notExhaustedCertificatesCount = 0;
+        for (uint256 i; i < qtdeCertificados; ++i) {
+            if (!certificates[ownedCertificates[certOwner][i]].isExhausted) {
+                notExhaustedCertificatesIDs[i] = ownedCertificates[certOwner][i];
+                ++notExhaustedCertificatesCount;
+            }
+        }
+
+        require(notExhaustedCertificatesCount > 0, 'Nao ha certificados disponiveis');
+
+        uint256 minorAmount = certificates[notExhaustedCertificatesIDs[0]].notBurnedAmount;
+        value = minorAmount;
+        index = 0;
 
         for (uint256 i; i < qtdeCertificados; ++i) {
-            if (!certificates[certificatesIDs[i]].isExhausted) {
-                if (certificates[certificatesIDs[i]].tokensActualAmount < minorAmount) {
-                    minorAmount = certificates[certificatesIDs[i]].tokensActualAmount;
+            if (notExhaustedCertificatesIDs[i] != 0) { // #avoid exhausteds
+                if (certificates[certificatesIDs[i]].notBurnedAmount < minorAmount) {
+                    minorAmount = certificates[certificatesIDs[i]].notBurnedAmount;
                     value = minorAmount;
                     index = i;
                 }
@@ -184,5 +224,9 @@ contract B3Router is Context, AccessControl, Pausable {
         }
 
         return (value, index);
+    }
+
+    function getOwnedCertificates() external view returns (uint256[] memory) {
+        return ownedCertificates[_msgSender()];
     }
 }

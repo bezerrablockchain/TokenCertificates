@@ -65,7 +65,7 @@ contract B3Token is Context, ERC20, Pausable, AccessControl {
     ) internal override(ERC20) whenNotPaused {
         if (to == address(0)) { // # Burn
             require(IB3Router(routerAddr).isWalletWhitelisted(from), 'Wallet nao autorizada');
-            IB3Router(routerAddr).burnCertificatesAmount(amount);
+            IB3Router(routerAddr).burnCertificatesAmount(_msgSender(), amount);
         } else { // # Mint or Transfer
             require(IB3Router(routerAddr).isWalletWhitelisted(to), 'Wallet nao autorizada');
         }

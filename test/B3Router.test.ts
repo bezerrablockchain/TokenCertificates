@@ -62,6 +62,7 @@ describe('B3Router', () => {
     b3Router
       .connect(masterAcct)
       .grantRole(await b3Router.ALLOWED_CONTRACT_ROLE(), b3CertificadoLote.address);
+    b3Router.connect(masterAcct).grantRole(await b3Router.ALLOWED_CONTRACT_ROLE(), b3Token.address);
 
     b3CertificadoLote
       .connect(masterAcct)
@@ -261,6 +262,7 @@ describe('B3Router', () => {
         'Quantidade de tokens indisponivel'
       );
     });
+
     it('should fail to transfer to not WL acct', async () => {
       const certificateId = 1;
       const shortDescription = 'LTof10';
@@ -285,5 +287,101 @@ describe('B3Router', () => {
         'Caller is not a valid account'
       );
     });
+
+    it('should burn some tokens', async () => {
+      const certificateId = 1;
+      const shortDescription = 'LTof10';
+      const tokensInitialAmount = 10;
+      const URI =
+        'https://maroon-tender-lobster-111.mypinata.cloud/ipfs/QmdnWXCUk6PVgisW8BthA1Bhhrw2cbr4h8g687mXokjv4q';
+
+      await b3Router
+        .connect(regulator)
+        .createNewCertificate(certificateId, shortDescription, tokensInitialAmount, URI);
+      await b3Router.connect(emissor).mintAvailableB3Tokens();
+      expect(await b3Token.balanceOf(b3Router.address)).to.equal(tokensInitialAmount);
+
+      // #get some tokens
+      await b3Router.connect(acct1).getSomeTokens(1, 5);
+      expect(await b3Token.balanceOf(acct1.address)).to.equal(5);
+      expect(await b3Token.balanceOf(b3Router.address)).to.equal(5);
+
+      const certInfo = await b3Router.getCertificateInfo(certificateId);
+      expect(certInfo[2]).to.equal(5); // actualAmount
+
+      // const ownedCertificates = await b3Router.connect(acct1).getOwnedCertificates();
+      // console.log("ownedCertificates", ownedCertificates);
+
+      // #burn some tokens
+      await b3Token.connect(acct1).burn(3);
+      expect(await b3Token.balanceOf(acct1.address)).to.equal(2);
+    });
+
+    it('should burn from minor certificate amount available', async () => {
+      // #1
+      let certificateId = 1;
+      let shortDescription = 'LTof1000';
+      let tokensInitialAmount = 1000;
+      let URI =
+        'https://maroon-tender-lobster-111.mypinata.cloud/ipfs/QmU6A1VgY1mRnADWJ6NfkGvqVF1CfSis6PrWns6qfF7eNs';
+
+      await b3Router
+        .connect(regulator)
+        .createNewCertificate(certificateId, shortDescription, tokensInitialAmount, URI);
+
+      // #2
+      certificateId = 2;
+      shortDescription = 'LTof900';
+      tokensInitialAmount = 900;
+      URI =
+        'https://maroon-tender-lobster-111.mypinata.cloud/ipfs/QmU6A1VgY1mRnADWJ6NfkGvqVF1CfSis6PrWns6qfF7eNs';
+      await b3Router
+        .connect(regulator)
+        .createNewCertificate(certificateId, shortDescription, tokensInitialAmount, URI);
+
+      // #3
+      certificateId = 3;
+      shortDescription = 'LTof10';
+      tokensInitialAmount = 10;
+      URI =
+        'https://maroon-tender-lobster-111.mypinata.cloud/ipfs/QmdnWXCUk6PVgisW8BthA1Bhhrw2cbr4h8g687mXokjv4q';
+      await b3Router
+        .connect(regulator)
+        .createNewCertificate(certificateId, shortDescription, tokensInitialAmount, URI);
+
+      expect(await b3CertificadoLote.totalSupply()).to.equal(3);
+
+      await b3Router.connect(emissor).mintAvailableB3Tokens();
+      expect(await b3Token.balanceOf(b3Router.address)).to.equal(1910); // 1000 + 900 + 10
+
+      // #get some tokens
+      await b3Router.connect(acct1).getSomeTokens(1, 5);
+      await b3Router.connect(acct1).getSomeTokens(2, 5);
+      await b3Router.connect(acct1).getSomeTokens(3, 5);
+
+      expect(await b3Token.balanceOf(acct1.address)).to.equal(15);
+
+      let certInfo = await b3Router.getCertificateInfo(1);
+      expect(certInfo[2]).to.equal(995); // actualAmount :: 1000 - 5
+
+      certInfo = await b3Router.getCertificateInfo(2);
+      expect(certInfo[2]).to.equal(895); // actualAmount :: 900 - 5
+
+      certInfo = await b3Router.getCertificateInfo(3);
+      expect(certInfo[2]).to.equal(5); // actualAmount :: 10 - 5
+
+      // #burn some tokens
+      await b3Token.connect(acct1).burn(11);
+      expect(await b3Token.balanceOf(acct1.address)).to.equal(4);
+
+      certInfo = await b3Router.getCertificateInfo(2);
+      // console.log('certInfo2', certInfo);
+      expect(certInfo[3]).to.equal(899); // notBurned :: 900 - 1
+
+      certInfo = await b3Router.getCertificateInfo(3);
+      // console.log('certInfo3', certInfo);
+      expect(certInfo[4]).is.true; // exhausted :: true
+    });
+
   });
 });
