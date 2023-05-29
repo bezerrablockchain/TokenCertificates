@@ -4,10 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "compile": "npx hardhat compile",
     "clean": "npx hardhat clean",
-    "deploy:testnet": "npx hardhat run scripts/deploy.ts --network mumbai",
+    "compile": "npx hardhat compile",
     "test": "npx hardhat test",
+    "size": "npx hardhat size-contracts --no-compile",
+    "deploy:testnet": "npx hardhat run scripts/deploy.ts --network mumbai",
     "coverage": "npx hardhat coverage"
   },
   "repository": {

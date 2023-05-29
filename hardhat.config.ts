@@ -47,7 +47,7 @@ const config: HardhatUserConfig = {
     excludeContracts: ['contracts/testing/'],
     onlyCalledMethods: true,
     outputFile: GAS_REPORT_OUTPUT_FILE,
-    noColors: false,
+    noColors: true,
   },
   contractSizer: {
     alphaSort: true,
