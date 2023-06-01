@@ -14,10 +14,10 @@ async function main() {
   await b3Token.deployed();
 
   console.log(`✅ B3Token deployed to ${b3Token.address}`);
-//==========================================================
+// ==========================================================
 
   console.log("💡 Deploying B3CertificadoLote");
-  const B3CertificadoLote = await ethers.getContractFactory('B3Token');
+  const B3CertificadoLote = await ethers.getContractFactory('B3CertificadoLote');
   const b3CertificadoLote = await B3CertificadoLote.deploy(process.env.MASTERACCT);
 
   await b3CertificadoLote.deployed();
