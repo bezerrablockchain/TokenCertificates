@@ -1,4 +1,7 @@
 import { ethers } from 'hardhat';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: './.env' });
 
 async function main() {
 
@@ -6,7 +9,7 @@ async function main() {
 
   console.log("💡 Deploying B3Token");
   const B3Token = await ethers.getContractFactory('B3Token');
-  const b3Token = await B3Token.deploy();
+  const b3Token = await B3Token.deploy(process.env.MASTERACCT);
 
   await b3Token.deployed();
 
@@ -15,7 +18,7 @@ async function main() {
 
   console.log("💡 Deploying B3CertificadoLote");
   const B3CertificadoLote = await ethers.getContractFactory('B3Token');
-  const b3CertificadoLote = await B3CertificadoLote.deploy();
+  const b3CertificadoLote = await B3CertificadoLote.deploy(process.env.MASTERACCT);
 
   await b3CertificadoLote.deployed();
 
@@ -24,7 +27,7 @@ async function main() {
 
   console.log("💡 Deploying B3Router");
   const B3Router = await ethers.getContractFactory('B3Router');
-  const b3Router = await B3Router.deploy(b3CertificadoLote.address, b3Token.address);
+  const b3Router = await B3Router.deploy(b3CertificadoLote.address, b3Token.address, process.env.MASTERACCT);
 
   await b3Router.deployed();
 
